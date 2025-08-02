@@ -1003,7 +1003,8 @@
        // AI Summarization Methods
        checkApiKey() {
          // Use the provided API key or get from localStorage
-         this.openRouterApiKey = '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' || localStorage.getItem('openrouter_api_key');
+         this.openRouterApiKey = localStorage.getItem('openrouter_api_key') || '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';
+         console.log('API Key check - Using key:', this.openRouterApiKey ? this.openRouterApiKey.substring(0, 20) + '...' : 'Not set');
          if (!this.openRouterApiKey) {
            this.showApiKeyPrompt();
          }
@@ -1106,6 +1107,10 @@
        async callOpenRouterAPI(guidelines) {
          const prompt = this.createAIPrompt(guidelines);
          
+         // Debug logging
+         console.log('OpenRouter API Key:', this.openRouterApiKey ? this.openRouterApiKey.substring(0, 20) + '...' : 'Not set');
+         console.log('Making API request to OpenRouter...');
+         
          try {
            const response = await fetch('https://openrouter.ai/api/v1/chat/completions', {
              method: 'POST',
@@ -1135,6 +1140,11 @@
 
            if (!response.ok) {
              const errorData = await response.json().catch(() => ({}));
+             console.error('OpenRouter API Error Response:', {
+               status: response.status,
+               statusText: response.statusText,
+               errorData: errorData
+             });
              throw new Error(`API request failed: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
            }
 
