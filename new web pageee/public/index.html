@@ -300,6 +300,14 @@
   </style>
 </head>
 <body class="min-h-screen font-inter">
+<script>
+  const PASSWORD = "MS2025";
+  let input = prompt("This page is protected. Please enter the password:");
+  if (input !== PASSWORD) {
+    document.body.innerHTML = "<h2 style='color:red;text-align:center;margin-top:50px;'>Access Denied</h2>";
+    throw new Error("Access Denied");
+  }
+</script>
   <!-- Medical Background Elements -->
   <div class="medical-bg">
     <div class="medical-element">
@@ -851,15 +859,19 @@
       }
 
       filterAndRankResults(guidelines, query) {
-        // Filter by query relevance
-        const filtered = guidelines.filter(guideline => 
-          guideline.title.toLowerCase().includes(query.toLowerCase()) ||
-          guideline.summary.toLowerCase().includes(query.toLowerCase()) ||
-          guideline.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
-        );
-        
-        // Sort by relevance
-        return filtered.sort((a, b) => b.relevance - a.relevance);
+    // Filter by query relevance
+    const filtered = guidelines.filter(guideline => 
+      guideline.title.toLowerCase().includes(query.toLowerCase()) ||
+      guideline.summary.toLowerCase().includes(query.toLowerCase()) ||
+      guideline.tags.some(tag => tag.toLowerCase().includes(query.toLowerCase()))
+    );
+    
+    // Sort by date (latest to oldest)
+    return filtered.sort((a, b) => {
+      const dateA = new Date(a.date);
+      const dateB = new Date(b.date);
+      return dateB - dateA; // Sort in descending order (latest first)
+    });
       }
 
              displayResults(guidelines) {
