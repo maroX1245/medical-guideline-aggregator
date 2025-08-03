@@ -1066,9 +1066,13 @@
        checkApiKey() {
          // Try to get API key from localStorage first
          this.openRouterApiKey = localStorage.getItem('openrouter_api_key') || 
-                                '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';
+                                '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';
          
-         console.log('Using OpenRouter API key:', this.openRouterApiKey ? '****' + this.openRouterApiKey.slice(-4) : 'None');
+         if (!this.openRouterApiKey) {
+           console.warn('No OpenRouter API key found. AI summarization will not work.');
+         } else {
+           console.log('Using OpenRouter API key:', '****' + this.openRouterApiKey.slice(-4));
+         }
        }
 
        showApiKeyPrompt() {
@@ -1191,11 +1195,8 @@ async callOpenRouterAPI(guidelines) {
             "content": prompt
           }
         ],
-        "max_tokens": 3000, // Increased token limit
         "temperature": 0.3,
-        "top_p": 0.95,
-        "frequency_penalty": 0.1,
-        "presence_penalty": 0.1
+        "max_tokens": 3000
       }),
       signal: controller.signal
     });
@@ -1204,15 +1205,24 @@ async callOpenRouterAPI(guidelines) {
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.error?.message || 'Failed to generate summary');
+      console.error('API Error:', errorData);
+      if (errorData.error?.message?.includes('quota')) {
+        throw new Error('API quota exceeded. Please check your OpenRouter account.');
+      }
+      throw new Error(errorData.error?.message || 'Failed to generate summary. Status: ' + response.status);
     }
 
     const data = await response.json();
     if (!data?.choices?.[0]?.message?.content) {
-      throw new Error('The AI service returned an empty response. Please try again.');
+      throw new Error('The AI service returned an empty response. Please try again with a different query.');
     }
-
-    return data.choices[0].message.content;
+ 
+    // Clean up the response content
+    let content = data.choices[0].message.content;
+    if (content.startsWith('"') && content.endsWith('"')) {
+      content = content.slice(1, -1);
+    }
+    return content;
   } catch (error) {
     console.error('AI Summary Error:', error);
     let errorMessage = 'Unable to generate AI summary. Please try again.';
